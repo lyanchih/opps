@@ -1,4 +1,4 @@
-package rackhd
+package utils
 
 import (
 	"bytes"
@@ -30,11 +30,19 @@ func send(method, apiURL string, data []byte) (*http.Response, error) {
 	return resp, err
 }
 
-func get(apiURL string, v interface{}) error {
-	return request("GET", apiURL, nil, v)
+func Get(apiURL string, v interface{}) error {
+	return request("GET", apiURL, nil, true, v)
 }
 
-func request(method, apiURL string, data []byte, v interface{}) error {
+func PostOnly(apiURL string, data []byte) error {
+	return request("POST", apiURL, data, false, nil)
+}
+
+func Post(apiURL string, data []byte, v interface{}) error {
+	return request("POST", apiURL, data, true, v)
+}
+
+func request(method, apiURL string, data []byte, needResp bool, v interface{}) error {
 	resp, err := send(method, apiURL, data)
 	if err != nil {
 		return err
@@ -52,5 +60,9 @@ func request(method, apiURL string, data []byte, v interface{}) error {
 		return err
 	}
 
-	return json.Unmarshal(bs, v)
+	if needResp {
+		return json.Unmarshal(bs, v)
+	}
+
+	return nil
 }

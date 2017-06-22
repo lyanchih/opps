@@ -1,6 +1,7 @@
 package rackhd
 
 import (
+	"gitlab.adlinktech.com/lyan.hung/opps/utils"
 	"net/url"
 	"path"
 )
@@ -33,26 +34,26 @@ func (c *RackhdClient) hostJoin(elems ...string) string {
 }
 
 func (c *RackhdClient) getWorkflows(wsURL string) (ws rackhdWorkflows, err error) {
-	err = get(c.hostJoin(wsURL), &ws)
+	err = utils.Get(c.hostJoin(wsURL), &ws)
 	return
 }
 
 func (c *RackhdClient) getWorkflow(id string) (w *rackhdWorkflow, err error) {
 	w = &rackhdWorkflow{}
-	if err = get(c.apiJoin("workflows", id), w); err != nil {
+	if err = utils.Get(c.apiJoin("workflows", id), w); err != nil {
 		w = nil
 	}
 	return
 }
 
 func (c *RackhdClient) getNodes() (ns rackhdNodes, err error) {
-	err = get(c.apiJoin("nodes"), &ns)
+	err = utils.Get(c.apiJoin("nodes"), &ns)
 	return
 }
 
 func (c *RackhdClient) getNode(id string) (n *rackhdNode, err error) {
 	n = &rackhdNode{}
-	if err = get(c.apiJoin("nodes", id), n); err != nil {
+	if err = utils.Get(c.apiJoin("nodes", id), n); err != nil {
 		n = nil
 	}
 	return
