@@ -33,15 +33,22 @@ func (r ReportStatus) String() string {
 }
 
 type Config struct {
+	Triggers  []Trigger   `json:"triggers"`
 	Scenarios []*Scenario `json:"scenarios"`
 }
 
+type Trigger struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
+
 type Scenario struct {
-	Name   string          `json:"name"`
-	Nodes  []Node          `json:"nodes"`
-	Label  []string        `json:"label"`
-	Engine string          `json:"engine"`
-	Data   json.RawMessage `json:"data"`
+	Name    string          `json:"name"`
+	Nodes   []Node          `json:"nodes"`
+	Label   []string        `json:"label"`
+	Engine  string          `json:"engine"`
+	Trigger []string        `json:"trigger"`
+	Data    json.RawMessage `json:"data"`
 }
 
 type ScenarioReport struct {

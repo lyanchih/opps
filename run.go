@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.adlinktech.com/lyan.hung/opps/conf"
 	"gitlab.adlinktech.com/lyan.hung/opps/engine"
+	"gitlab.adlinktech.com/lyan.hung/opps/trigger"
 	"log"
 )
 
@@ -65,6 +66,16 @@ func initScenarios() error {
 	return nil
 }
 
+func initTriggers() error {
+	cfg, err := conf.GetConf()
+	if err != nil {
+		return err
+	}
+
+	trigger.InitTriggers(cfg.Triggers)
+	return nil
+}
+
 func runOpps(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		log.Println("Init config with failed:", err)
@@ -76,6 +87,11 @@ func runOpps(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if err := initTriggers(); err != nil {
+		log.Println("Init triggers with failed:", err)
+		return err
+	}
+
 	go handleScenarioReport()
 	return nil
 }
@@ -84,12 +100,13 @@ func handleScenarioReport() {
 	for {
 		select {
 		case r := <-reportCh:
-			_, ok := scenarioMap[r.Name]
+			s, ok := scenarioMap[r.Name]
 			if !ok {
 				log.Printf("Report name %s is not declear at any scenario\n", r.Name)
 			}
 			log.Printf("Scenario name %s had been %s status\n",
 				r.Name, r.Status)
+			trigger.Trigger(s.Nodes, r.Data, s.Trigger...)
 		}
 	}
 }
