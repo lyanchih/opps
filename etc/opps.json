@@ -1,0 +1,39 @@
+{
+  "triggers": [
+    {
+      "type": "url"
+    },
+    {
+      "type": "slack",
+      "data": {
+        "url": "slack_url",
+        "channel": "#opps"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "nodes": [
+        {
+          "identifiers": [
+            "52:54:00:c4:02:f0"
+          ]
+        },
+        {
+          "identifiers": [
+            "52:54:00:c4:02:a0"
+          ]
+        }
+      ],
+      "engine": "rackhd",
+      "trigger": [
+        "slack",
+        "url"
+      ],
+      "data": {
+        "graph": "Graph.QEMU.InstallCentOS",
+        "api": "http://172.16.6.125:9080/api/2.0"
+      }
+    }
+  ]
+}
