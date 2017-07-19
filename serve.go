@@ -10,14 +10,25 @@ import (
 	"strings"
 )
 
+const serveCmdUse = "serve"
+
 var (
-	address string
-	port    uint32
+	address    string
+	port       uint32
+	serverDone chan bool
 )
+
+func init() {
+	serverDone = make(chan bool, 1)
+}
+
+func closeServe() {
+	close(serverDone)
+}
 
 func newServeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "serve",
+		Use:   serveCmdUse,
 		Short: "OPPS serve",
 		RunE:  runServe,
 	}
@@ -29,11 +40,26 @@ func newServeCommand() *cobra.Command {
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
-	runOpps(cmd, args)
+	err := runOpps(cmd, args)
+	if err != nil {
+		return err
+	}
 
 	http.HandleFunc("/hook/", handleHook)
 
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
+	srv := &http.Server{
+		Addr: fmt.Sprintf("%s:%d", address, port),
+	}
+	go srv.ListenAndServe()
+	go func() {
+		select {
+		case <-reportDone:
+			serverDone <- true
+		}
+		err := srv.Close()
+		log.Println("Close server with", err)
+	}()
+	return nil
 }
 
 func handleHook(w http.ResponseWriter, req *http.Request) {

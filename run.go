@@ -11,11 +11,13 @@ import (
 var (
 	reportCh    chan conf.ScenarioReport
 	scenarioMap map[string]*conf.Scenario
+	reportDone  chan bool
 )
 
 func init() {
 	reportCh = make(chan conf.ScenarioReport, 10)
 	scenarioMap = make(map[string]*conf.Scenario)
+	reportDone = make(chan bool, 1)
 }
 
 func initConfig() error {
@@ -24,10 +26,10 @@ func initConfig() error {
 	return err
 }
 
-func initScenarios() error {
+func initScenarios() ([]*conf.Scenario, error) {
 	cfg, err := conf.GetConf()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, s := range cfg.Scenarios {
@@ -63,7 +65,7 @@ func initScenarios() error {
 		scenarioMap[id] = s
 	}
 
-	return nil
+	return cfg.Scenarios, nil
 }
 
 func initTriggers() error {
@@ -82,7 +84,8 @@ func runOpps(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := initScenarios(); err != nil {
+	ss, err := initScenarios()
+	if err != nil {
 		log.Println("Init scenarios with failed:", err)
 		return err
 	}
@@ -92,11 +95,17 @@ func runOpps(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	go handleScenarioReport()
+	go handleScenarioReport(ss)
 	return nil
 }
 
-func handleScenarioReport() {
+func handleScenarioReport(ss []*conf.Scenario) {
+	if len(ss) == 0 {
+		log.Println("This cluster do not have any scenario to wait report")
+		return
+	}
+
+	reportStatus := make(map[string]conf.ReportStatus)
 	for {
 		select {
 		case r := <-reportCh:
@@ -104,9 +113,21 @@ func handleScenarioReport() {
 			if !ok {
 				log.Printf("Report name %s is not declear at any scenario\n", r.Name)
 			}
+			reportStatus[r.Name] = r.Status
 			log.Printf("Scenario name %s had been %s status\n",
 				r.Name, r.Status)
 			trigger.Trigger(s.Nodes, r.Data, s.Trigger...)
+
+			for i, s := range ss {
+				st, ok := reportStatus[s.Name]
+				if !ok || st != conf.ReportSucceededStatus {
+					break
+				} else if i == len(ss)-1 {
+					reportDone <- true
+					log.Println("All scenario had been succeed status, so finish opps")
+					return
+				}
+			}
 		}
 	}
 }

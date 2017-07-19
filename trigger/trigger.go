@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gitlab.adlinktech.com/lyan.hung/opps/conf"
 	"log"
+	"sync"
 )
 
 var (
@@ -26,7 +27,7 @@ func InitTriggers(ts []conf.Trigger) error {
 
 		err := target.init(t.Data)
 		if err != nil {
-			log.Printf("Trigger %s type init failed: err\n", t.Type, err)
+			log.Printf("Trigger %s type init failed: err %s", t.Type, err)
 			delete(targets, t.Type)
 			continue
 		}
@@ -38,8 +39,12 @@ func InitTriggers(ts []conf.Trigger) error {
 }
 
 func Trigger(nodes []conf.Node, data []byte, types ...string) {
+	wg := &sync.WaitGroup{}
+
 	for _, t := range types {
 		go func(t string) {
+			defer wg.Done()
+
 			target, ok := targets[t]
 			if !ok {
 				log.Printf("Trigger %s type is not support\n", t)
@@ -51,5 +56,8 @@ func Trigger(nodes []conf.Node, data []byte, types ...string) {
 				return
 			}
 		}(t)
+		wg.Add(1)
 	}
+
+	wg.Wait()
 }

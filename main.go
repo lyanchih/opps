@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	if err := newRootCommand().Execute(); err != nil {
+	cmd, err := newRootCommand().ExecuteC()
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	waitDone(cmd)
 }

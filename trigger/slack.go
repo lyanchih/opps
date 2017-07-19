@@ -65,7 +65,7 @@ func newSlackPayload(data []byte) (*slackPayload, error) {
 	}
 
 	if !strings.HasPrefix(p.URL, slackHost) {
-		return nil, fmt.Errorf("Slack url %s is not valid\n", p.URL)
+		return nil, fmt.Errorf("Slack url %s is not valid", p.URL)
 	}
 
 	if len(p.Username) == 0 {

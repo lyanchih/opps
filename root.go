@@ -18,3 +18,13 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newServeCommand())
 	return cmd
 }
+
+func waitDone(cmd *cobra.Command) {
+	if cmd.Name() != serveCmdUse {
+		closeServe()
+	}
+
+	select {
+	case <-serverDone:
+	}
+}
