@@ -58,3 +58,13 @@ func (c *RackhdClient) getNode(id string) (n *rackhdNode, err error) {
 	}
 	return
 }
+
+func (c *RackhdClient) lookup(q string) (l *rackhdLookup, err error) {
+	ls := []rackhdLookup{}
+	if err = utils.Get(c.apiJoin("lookups")+"?q="+q, &ls); err != nil || len(ls) == 0 {
+		l = nil
+	} else {
+		l = &ls[0]
+	}
+	return
+}

@@ -44,7 +44,7 @@ type Trigger struct {
 
 type Scenario struct {
 	Name    string          `json:"name"`
-	Nodes   []Node          `json:"nodes"`
+	Nodes   []*Node         `json:"nodes"`
 	Label   []string        `json:"label"`
 	Engine  string          `json:"engine"`
 	Trigger []string        `json:"trigger"`
@@ -60,6 +60,9 @@ type ScenarioReport struct {
 type Node struct {
 	Name        string   `json:"name"`
 	Identifiers []string `json:"identifiers"`
+	IP          string   `json:"ip"`
+	MAC         string   `json:"mac"`
+	Label       []string `json:"label"`
 }
 
 func (n Node) String() (s string) {
@@ -70,4 +73,17 @@ func (n Node) String() (s string) {
 	}
 
 	return s
+}
+
+func CopyNodes(nodes []*Node) []Node {
+	a := make([]Node, 0, len(nodes))
+	for _, n := range nodes {
+		if n == nil {
+			continue
+		}
+
+		a = append(a, *n)
+	}
+
+	return a
 }

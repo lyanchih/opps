@@ -20,6 +20,21 @@ func init() {
 	reportDone = make(chan bool, 1)
 }
 
+func initOpps() (ss []*conf.Scenario, err error) {
+	if err := initConfig(); err != nil {
+		log.Println("Init config with failed:", err)
+		return nil, err
+	}
+
+	ss, err = initScenarios()
+	if err != nil {
+		log.Println("Init scenarios with failed:", err)
+		return nil, err
+	}
+
+	return ss, nil
+}
+
 func initConfig() error {
 	log.Println("Ready to parse config file", config)
 	_, err := conf.ParseConf(config)
@@ -79,14 +94,8 @@ func initTriggers() error {
 }
 
 func runOpps(cmd *cobra.Command, args []string) error {
-	if err := initConfig(); err != nil {
-		log.Println("Init config with failed:", err)
-		return err
-	}
-
-	ss, err := initScenarios()
+	ss, err := initOpps()
 	if err != nil {
-		log.Println("Init scenarios with failed:", err)
 		return err
 	}
 
@@ -116,7 +125,7 @@ func handleScenarioReport(ss []*conf.Scenario) {
 			reportStatus[r.Name] = r.Status
 			log.Printf("Scenario name %s had been %s status\n",
 				r.Name, r.Status)
-			trigger.Trigger(s.Nodes, r.Data, s.Trigger...)
+			trigger.Trigger(conf.CopyNodes(s.Nodes), r.Data, s.Trigger...)
 
 			for i, s := range ss {
 				st, ok := reportStatus[s.Name]

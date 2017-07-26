@@ -52,7 +52,7 @@ func (e *rackhdEngine) Name() string {
 	return Name()
 }
 
-func (e *rackhdEngine) Discovery(reportCh chan<- conf.ScenarioReport, nodes []conf.Node,
+func (e *rackhdEngine) Discovery(reportCh chan<- conf.ScenarioReport, nodes []*conf.Node,
 	data []byte) (string, error) {
 	p, err := newRackhdEnginePayload(reportCh, nodes, data)
 	if err != nil {
@@ -60,11 +60,10 @@ func (e *rackhdEngine) Discovery(reportCh chan<- conf.ScenarioReport, nodes []co
 	}
 
 	go p.handleStatus()
-	go func() {
-		if err := p.discovery(); err != nil {
-			log.Printf("Engine %s discovery failed: %s\n", Name(), err)
-		}
-	}()
+	if err := p.discovery(); err != nil {
+		log.Printf("Engine %s discovery failed: %s\n", Name(), err)
+		return "", err
+	}
 
 	e.payloads = append(e.payloads, p)
 	rackhdPayloadNameMap[p.name] = p

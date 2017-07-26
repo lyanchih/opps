@@ -109,3 +109,10 @@ type nodeStatus struct {
 	node   rackhdNode
 	status string
 }
+
+type rackhdLookup struct {
+	ID   string `json:"id"`
+	Node string `json:"node"`
+	MAC  string `json:"macAddress"`
+	IP   string `json:"ipAddress"`
+}

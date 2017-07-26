@@ -14,7 +14,7 @@ var (
 
 type Engine interface {
 	Name() string
-	Discovery(chan<- conf.ScenarioReport, []conf.Node, []byte) (string, error)
+	Discovery(chan<- conf.ScenarioReport, []*conf.Node, []byte) (string, error)
 	HandleHook(data []byte) error
 }
 

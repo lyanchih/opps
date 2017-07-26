@@ -12,7 +12,7 @@ func (f *fakeEngine) Name() string {
 }
 
 func (f *fakeEngine) Discovery(chan<- conf.ScenarioReport,
-	[]conf.Node, []byte) (string, error) {
+	[]*conf.Node, []byte) (string, error) {
 	return "", nil
 }
 

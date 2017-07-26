@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gitlab.adlinktech.com/lyan.hung/opps/conf"
 	"log"
+	"sync"
 )
 
 var ErrEngineDataNotValid = errors.New("Engine data is not valid")
@@ -14,14 +15,14 @@ type rackhdEnginePayload struct {
 	API               string `json:"api"`
 	client            *RackhdClient
 	name              string
-	nodes             []conf.Node
+	nodes             []*conf.Node
 	status            conf.ReportStatus
 	nodeStatusMap     map[string]string
 	nodeStatusChannel chan nodeStatus
 	reportCh          chan<- conf.ScenarioReport
 }
 
-func newRackhdEnginePayload(reportCh chan<- conf.ScenarioReport, nodes []conf.Node,
+func newRackhdEnginePayload(reportCh chan<- conf.ScenarioReport, nodes []*conf.Node,
 	data []byte) (*rackhdEnginePayload, error) {
 	if len(data) == 0 {
 		return nil, ErrEngineDataNotValid
@@ -141,12 +142,21 @@ func (p *rackhdEnginePayload) discovery() error {
 		return err
 	}
 
+	wg := &sync.WaitGroup{}
 	for _, n := range p.nodes {
-		go func(n conf.Node) {
+		wg.Add(1)
+		go func(n *conf.Node) {
+			defer wg.Done()
+
 			rNode := rackNodes.findByIdentifiers(n.Identifiers)
 			if rNode == nil {
 				log.Printf("Node identifiers %s is not discovered yet\n", n.Identifiers)
 				return
+			}
+			if l, err := p.client.lookup(n.Identifiers[0]); err != nil {
+				log.Printf("Lookup %s failed: %s\n", n.Identifiers[0], err)
+			} else {
+				n.IP, n.MAC = l.IP, l.MAC
 			}
 
 			s, err := rNode.getGraphStatus(p.client, p.Graph)
@@ -163,6 +173,7 @@ func (p *rackhdEnginePayload) discovery() error {
 			}
 		}(n)
 	}
+	wg.Wait()
 	return nil
 }
 
@@ -170,12 +181,12 @@ func (p *rackhdEnginePayload) findNode(rNode *rackhdNode) *conf.Node {
 	for _, n := range p.nodes {
 		for _, iden := range n.Identifiers {
 			if rNode.Name == iden {
-				return &n
+				return n
 			}
 
 			for _, iden2 := range rNode.Identifiers {
 				if iden2 == iden {
-					return &n
+					return n
 				}
 			}
 		}

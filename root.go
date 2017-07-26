@@ -16,6 +16,7 @@ func newRootCommand() *cobra.Command {
 	f.StringVarP(&config, "conf", "", "etc/opps.json", "opps config")
 
 	cmd.AddCommand(newServeCommand())
+	cmd.AddCommand(newReportCommand())
 	return cmd
 }
 
